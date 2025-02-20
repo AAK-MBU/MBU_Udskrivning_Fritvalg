@@ -17,7 +17,9 @@ from robot_framework import config
 
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
-    orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    # orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    import os
+    orchestrator_connection = OrchestratorConnection("Udvikling: MBU_Udskrivning_Fritvalg", os.environ.get('OpenOrchestratorConnStringTest'), os.environ.get('OpenOrchestratorKeyTest'), '')
     sys.excepthook = log_exception(orchestrator_connection)
 
     orchestrator_connection.log_trace("Robot Framework started.")
@@ -45,7 +47,7 @@ def main():
                     orchestrator_connection.set_queue_element_status(queue_element.id, QueueStatus.DONE)
 
                 except BusinessError as error:
-                    handle_error("Business Error", error, queue_element, orchestrator_connection)
+                    handle_error("BusinessException", None, error, queue_element, orchestrator_connection)
 
             break  # Break retry loop
 
@@ -53,7 +55,7 @@ def main():
         # pylint: disable-next = broad-exception-caught
         except Exception as error:
             error_count += 1
-            handle_error(f"Process Error #{error_count}", error, queue_element, orchestrator_connection)
+            handle_error("ApplicationException", error_count, error, queue_element, orchestrator_connection)
 
     reset.clean_up(orchestrator_connection)
     reset.close_all(orchestrator_connection)
@@ -61,3 +63,7 @@ def main():
 
     if config.FAIL_ROBOT_ON_TOO_MANY_ERRORS and error_count == config.MAX_RETRY_COUNT:
         raise RuntimeError("Process failed too many times.")
+
+
+if __name__ == "__main__":
+    main()
