@@ -19,9 +19,12 @@ ERROR_EMAIL = "Error Email"
 # ----------------------
 
 # The name of the job queue (if any)
-QUEUE_NAME = None
+QUEUE_NAME = "tan.udskrivning0-21.main"
 
 # The limit on how many queue elements to process
 MAX_TASK_COUNT = 100
 
 # ----------------------
+SOLTEQ_TAND_APP_PATH = "C:\\Program Files (x86)\\TM Care\\TM Tand\\TMTand.exe"
+TMP_FOLDER = "C:\\tmp\\tmt"
+ROMEXIS_ROOT_PATH = r"\\SRVAPPROMEX04\romexis_images$"
