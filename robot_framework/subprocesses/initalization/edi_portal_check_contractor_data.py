@@ -3,13 +3,15 @@ This module contains a function to check if the contractor ID is valid.
 """
 
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
-from OpenOrchestrator.database.queues import QueueElement
 
-from robot_framework.subprocesses.db_utils import get_exceptions
 from robot_framework.exceptions import BusinessError
+from robot_framework.subprocesses.db_utils import get_exceptions
 
 
-def check_contractor_data(orchestrator_connection: OrchestratorConnection, queue_element_data: QueueElement, app_obj) -> None:
+def check_contractor_data(
+    orchestrator_connection: OrchestratorConnection,
+    app_obj,
+) -> None:
     """
     Check if the contractor ID is valid.
 
@@ -25,22 +27,20 @@ def check_contractor_data(orchestrator_connection: OrchestratorConnection, queue
             orchestrator_connection=orchestrator_connection
         )
         orchestrator_connection.log_trace("Checking if contractor id is set...")
-        rpa_db_conn = orchestrator_connection.get_constant(
-                "rpa_db_connstr"
-            ).value
+        rpa_db_conn = orchestrator_connection.get_constant("rpa_db_connstr").value
         if contractor_check["rowCount"] == 0:
-            excp = get_exceptions(rpa_db_conn, queue_element_data["process_id"])
+            excp = get_exceptions(rpa_db_conn)
             message = [d for d in excp if d["exception_code"] == "1G"][0][
                 "message_text"
             ]
             raise BusinessError(message)
         if contractor_check["isPhoneNumberMatch"] is False:
-            excp = get_exceptions(rpa_db_conn, queue_element_data["process_id"])
+            excp = get_exceptions(rpa_db_conn)
             message = [d for d in excp if d["exception_code"] == "1H"][0][
                 "message_text"
             ]
             raise BusinessError(message)
     except BusinessError:
         raise
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-except
         print(f"Error: {error}")

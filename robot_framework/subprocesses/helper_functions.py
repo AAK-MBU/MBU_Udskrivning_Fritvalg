@@ -5,33 +5,38 @@ from datetime import datetime
 
 
 def cpr_to_birthdate(ssn: str) -> datetime:
-    """Convert a Danish CPR number to a birthdate with the correct century."""
-    if len(ssn) < 10:
-        raise ValueError("CPR number must be at least 10 characters long")
+    """
+    Convert a Danish CPR number (DDMMYYSSSS) to a birth-date
+    with the correct century.
 
-    day = int(ssn[:2])
+    Century rules  (DST / CPR):
+      personal 0-1999 → 1900-1999 if YY ≥ 37 else 2000-2036
+      personal 2000-4999 → 1900-1999
+      personal 5000-8999 → 1900-1999 if YY ≥ 37 else 2000-2036
+      personal 9000-9999 → 1800-1899 if YY ≥ 37 else 2000-2036
+    """
+    if len(ssn) != 10 or not ssn.isdigit():
+        raise ValueError("CPR number must be exactly 10 digits (DDMMYYSSSS)")
+
+    day   = int(ssn[0:2])
     month = int(ssn[2:4])
-    year_suffix = int(ssn[4:6])
-    personal_number = int(ssn[6:10])  # Last 4 digits
+    yy    = int(ssn[4:6])
+    ssss  = int(ssn[6:10])
 
-    # Determine the full year based on the serial number
-    if 0 <= personal_number <= 4999:
-        birth_year = 1900 + year_suffix  # 1900-1999
-    elif 5000 <= personal_number <= 8999:
-        if year_suffix >= 37:
-            birth_year = 1900 + year_suffix  # 1937-1999
-        else:
-            birth_year = 2000 + year_suffix  # 2000-2036
-    elif 9000 <= personal_number <= 9999:
-        if year_suffix >= 00 and year_suffix <= 36:
-            birth_year = 2000 + year_suffix  # 2000-2036
-        else:
-            birth_year = 1800 + year_suffix  # 1800-1899
+    # Determine the full year
+    if 0 <= ssss <= 1999:
+        year = 1900 + yy if yy >= 37 else 2000 + yy
+    elif 2000 <= ssss <= 4999:
+        year = 1900 + yy
+    elif 5000 <= ssss <= 8999:
+        year = 1900 + yy if yy >= 37 else 2000 + yy
+    elif 9000 <= ssss <= 9999:
+        year = 1800 + yy if yy >= 37 else 2000 + yy
     else:
-        raise ValueError("Invalid CPR format: Personal number out of range")
+        raise ValueError("Invalid CPR personal-number range")
 
-    # Construct the birthdate
-    return datetime(birth_year, month, day)
+    # Let datetime validate day/month automatically
+    return datetime(year, month, day)
 
 
 def future_dates(ssn: str) -> tuple:
@@ -64,5 +69,5 @@ def zip_folder_contents(folder_path: str, zip_filename: str) -> None:
                 full_path = os.path.join(folder_path, filename)
                 if os.path.isfile(full_path):
                     zipf.write(full_path, arcname=filename)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error zipping folder: {e}")

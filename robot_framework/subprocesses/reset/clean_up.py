@@ -20,7 +20,7 @@ def clean_up_tmp_folder(orchestrator_connection: OrchestratorConnection) -> None
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
-            except Exception as error:
+            except Exception as error:  # pylint: disable=broad-except
                 orchestrator_connection.log_trace(f"Failed to delete {file_path}. Reason: {error}")
         orchestrator_connection.log_trace(f"Temporary folder {config.TMP_FOLDER} cleaned up.")
     else:
@@ -40,7 +40,7 @@ def clean_up_download_folder(orchestrator_connection: OrchestratorConnection) ->
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
-            except Exception as error:
+            except Exception as error:  # pylint: disable=broad-except
                 orchestrator_connection.log_trace(f"Failed to delete {file_path}. Reason: {error}")
         orchestrator_connection.log_trace(f"Download folder {download_folder} cleaned up.")
     else:

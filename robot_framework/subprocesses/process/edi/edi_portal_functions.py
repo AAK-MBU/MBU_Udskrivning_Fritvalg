@@ -2,9 +2,13 @@
 This module contains functions to interact with the EDI portal.
 These functions should be moved to mbu_dev_shared_components/solteqtand/application/edi_portal.py
 """
+import locale
 import re
 import time
+from datetime import datetime
 from pathlib import Path
+
+import pyodbc
 import uiautomation as auto
 
 
@@ -38,7 +42,7 @@ def wait_for_control(
             if control.Exists(0, 0):
                 print(f"Control found: {search_params}")
                 return control
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(f"Error while searching for control: {e}")
 
         time.sleep(retry_interval)
@@ -72,7 +76,7 @@ def wait_for_control_to_disappear(
             control = control_type(searchDepth=search_depth, **search_params)
             if not control.Exists(0, 0):
                 return True
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(f"Error while searching for control: {e}")
 
         time.sleep(0.5)
@@ -122,8 +126,7 @@ def edi_portal_check_contractor_id(extern_clinic_data: dict, sleep_time: int = 5
                 continue
             if search_box:
                 break
-            else:
-                raise RuntimeError("Search box not found")
+
         search_box.SetFocus()
         search_box_value_pattern = search_box.GetPattern(auto.PatternId.ValuePattern)
         search_box_value_pattern.SetValue(contractor_id)
@@ -228,8 +231,7 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
                 continue
             if search_box:
                 break
-            else:
-                raise RuntimeError("Search box not found")
+
         search_box.SetFocus()
         search_box_value_pattern = search_box.GetPattern(auto.PatternId.ValuePattern)
         search_box_value_pattern.SetValue(contractor_id)
@@ -294,10 +296,6 @@ def edi_portal_add_content(
         Returns:
             str: The formatted date string or an error message.
         """
-        # Importing datetime and locale inside the function to avoid global scope pollution
-        from datetime import datetime
-        import locale
-
         try:
             locale.setlocale(locale.LC_TIME, "da_DK.UTF-8")
         except locale.Error:
@@ -565,35 +563,32 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
 
 def rename_file(file_path: str, new_name: str, extension: str) -> str:
     """
-    Renames a file to the new name with the specified extension and returns the new file path.
+    Renames a file and returns its new path.
 
     Args:
-        file_path (str): The path of the file to be renamed.
-        new_name (str): The new name for the file.
-        extension (str): The new file extension (e.g., '.txt', '.pdf').
+        file_path (str): Full path to the file to rename.
+        new_name   (str): New filename without extension.
+        extension  (str): New extension (e.g. '.pdf').
 
     Returns:
-        str: The path to the file with the new filename.
+        str: Absolute path to the renamed file.
+
+    Raises:
+        FileNotFoundError: If the source file does not exist.
+        OSError:           If the rename operation fails.
     """
-    try:
-        path = Path(file_path)
-        if path.exists():
-            new_file_path = path.parent / f"{new_name}{extension}"
-            path.rename(new_file_path)
-            print(f"File renamed to: {new_file_path}")
-            return str(new_file_path)
-        else:
-            raise FileNotFoundError(f"File not found: {file_path}")
-    except Exception as e:
-        print(f"Error while renaming file: {e}")
-        raise
+    path = Path(file_path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    new_file_path = path.parent / f"{new_name}{extension}"
+    path.rename(new_file_path)
+    return str(new_file_path)
 
 
 def get_constants(conn_string: str, name: str) -> list:
     """Retrieve the constants from the database."""
-    # Importing pyodbc inside the function to avoid global scope pollution
-    import pyodbc
-
     try:
         query = """
             SELECT
@@ -650,7 +645,6 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
             {"ClassName": "BrowserRootView"},
             search_depth=4
         )
-        print(f"Next test: {next_test}")
 
         table_post_messages = wait_for_control(
             next_test.TableControl,
@@ -670,9 +664,8 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         if success_message:
             print("Message has already been sent.")
             return True
-        else:
-            print("Message has not been sent.")
-            return False
+
+        return False
     except TimeoutError:
         return False
     except Exception as e:

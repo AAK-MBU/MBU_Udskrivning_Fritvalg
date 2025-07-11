@@ -9,11 +9,9 @@ def update_patient_info(orchestrator_connection, is_patient_under_16):
     # Set values based on the patient's age.
     if is_patient_under_16:
         status = "Frit valg 0-15 år"
-        template_name = "Følgebrev - Frit valg 0-15 år"
         discharge_document_filename = "Udskrivning til privat praksis 0-15 år"
     else:
         status = "Frit valg fra 16 år"
-        template_name = "Følgebrev - Frit valg fra 16 år"
         discharge_document_filename = "Udskrivning til privat praksis fra 16 år"
 
     # Change status if needed.
@@ -63,4 +61,4 @@ def update_patient_info(orchestrator_connection, is_patient_under_16):
             f"Primary dentist is already '{default_clinician_name}', no update needed."
         )
 
-    return template_name, discharge_document_filename
+    return discharge_document_filename

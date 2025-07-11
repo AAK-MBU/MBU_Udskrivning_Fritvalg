@@ -180,7 +180,6 @@ class InitializationChecks:
             self.orchestrator_connection.log_trace(
                 "Checking if administrative note is set..."
             )
-            print(f"{self.queue_element_data["tandplejeplan"]=}")
             if not result and self.queue_element_data["tandplejeplan"] is True:
                 message = self._get_error_message("1F", "Found no administrative note.")
                 self.orchestrator_connection.log_error(message)

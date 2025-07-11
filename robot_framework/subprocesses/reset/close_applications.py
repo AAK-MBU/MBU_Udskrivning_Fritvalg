@@ -9,7 +9,7 @@ def close_patient_window(orchestrator_connection: OrchestratorConnection) -> Non
         try:
             orchestrator_connection.log_trace("Close patient window.")
             orchestrator_connection.solteq_tand_app.close_patient_window()
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             orchestrator_connection.log_trace("Error closing patient window." + str(error))
 
 
@@ -20,7 +20,7 @@ def close_solteq_tand(orchestrator_connection: OrchestratorConnection) -> None:
             orchestrator_connection.log_trace("Close Solteq Tand.")
             orchestrator_connection.solteq_tand_app.close_solteq_tand()
             orchestrator_connection.log_trace("Solteq Tand closed.")
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-except
             orchestrator_connection.log_trace(f"Error closing Solteq Tand: {error}")
     else:
         orchestrator_connection.log_trace("solteq_tand_app attribute not found. Skipping close operations.")
