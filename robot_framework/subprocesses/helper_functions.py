@@ -18,10 +18,10 @@ def cpr_to_birthdate(ssn: str) -> datetime:
     if len(ssn) != 10 or not ssn.isdigit():
         raise ValueError("CPR number must be exactly 10 digits (DDMMYYSSSS)")
 
-    day   = int(ssn[0:2])
+    day = int(ssn[0:2])
     month = int(ssn[2:4])
-    yy    = int(ssn[4:6])
-    ssss  = int(ssn[6:10])
+    yy = int(ssn[4:6])
+    ssss = int(ssn[6:10])
 
     # Determine the full year
     if 0 <= ssss <= 1999:
