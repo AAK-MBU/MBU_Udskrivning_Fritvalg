@@ -26,7 +26,6 @@ def handle_error(message: str, error_count: str | None, error: Exception, queue_
         queue_element: The queue element to fail, if any.
         orchestrator_connection: A connection to OpenOrchestrator.
     """
-    # error_msg = f"{message}: {repr(error)}\n\nTrace:\n{traceback.format_exc()}"
     error_dict = {
         "type": message,
         "error_count": error_count,
@@ -34,12 +33,18 @@ def handle_error(message: str, error_count: str | None, error: Exception, queue_
         "trace": traceback.format_exc()
     }
     error_msg = json.dumps(error_dict, ensure_ascii=False)
+    error_msg = (
+        f"{error_msg[:500]}  [...] {error_msg[-490:]}"
+        if len(error_msg) > 1000
+        else error_msg
+    )  # Shorten error msg such that it can be sent to SQL database
     error_email = orchestrator_connection.get_constant(config.ERROR_EMAIL).value
 
     orchestrator_connection.log_error(error_msg)
     if queue_element:
         orchestrator_connection.set_queue_element_status(queue_element.id, QueueStatus.FAILED, error_msg)
-    # error_screenshot.send_error_screenshot(error_email, error, orchestrator_connection.process_name)
+
+    error_screenshot.send_error_screenshot(error_email, error, orchestrator_connection.process_name)
 
 
 def log_exception(orchestrator_connection: OrchestratorConnection) -> callable:
