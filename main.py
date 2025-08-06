@@ -10,6 +10,7 @@ script_directory = os.path.dirname(os.path.realpath(__file__))
 os.chdir(script_directory)
 
 subprocess.run("python -m venv .venv", check=True)
+subprocess.run("python -m pip install --upgrade pip", check=True)
 subprocess.run(r'.venv\Scripts\pip install .', check=True)
 
 command_args = [r".venv\Scripts\python", "-m", "robot_framework"] + sys.argv[1:]
