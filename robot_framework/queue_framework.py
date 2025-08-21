@@ -17,7 +17,14 @@ from robot_framework import config
 
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
-    orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    # orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    import os
+    orchestrator_connection = OrchestratorConnection(
+        'MBU Udskrivning 0-21 år',
+        os.environ.get('OpenOrchestratorConnString'),
+        os.environ.get('OpenOrchestratorKey'),
+        ''
+    )
     sys.excepthook = log_exception(orchestrator_connection)
 
     orchestrator_connection.log_trace("Robot Framework started.")
@@ -62,3 +69,7 @@ def main():
 
     if config.FAIL_ROBOT_ON_TOO_MANY_ERRORS and error_count == config.MAX_RETRY_COUNT:
         raise RuntimeError("Process failed too many times.")
+
+
+if __name__ == "__main__":
+    main()

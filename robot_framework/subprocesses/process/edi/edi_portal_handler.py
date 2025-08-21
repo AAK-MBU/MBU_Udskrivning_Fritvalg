@@ -29,6 +29,7 @@ class EdiContext:
     extern_clinic_data: Dict[str, Any]
     queue_element: Dict[str, Any]
     path_to_files_for_upload: str
+    base_subject: str = ""
     subject: str = ""
     journal_note: str | None = None
     value_data: Dict[str, Any] | None = None
@@ -107,7 +108,15 @@ def edi_portal_handler(
     patient_name = context.queue_element.get("patient_name")
     base_subject = context.value_data["edi_portal_content"]["subject"]
 
-    context.subject = f"{base_subject} {patient_name}"
+    if context.extern_clinic_data[0]["contractorId"] == "477052":
+        subject = base_subject + " på Tandklinikken Hasle Torv " + patient_name
+    elif context.extern_clinic_data[0]["contractorId"] == "470678":
+        subject = base_subject + " på Tandklinikken Brobjergparken " + patient_name
+    else:
+        subject = base_subject + " " + patient_name
+
+    context.subject = subject
+    print(f"Using subject: {context.subject}")
 
     # Define the ordered list of pipeline steps
     pipeline: List[Step] = [

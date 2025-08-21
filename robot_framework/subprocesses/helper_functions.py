@@ -1,4 +1,5 @@
-""" Helper functions for subprocesses """
+"""Helper functions for subprocesses"""
+
 import os
 import zipfile
 from datetime import datetime
@@ -41,17 +42,37 @@ def cpr_to_birthdate(ssn: str) -> datetime:
 
 def future_dates(ssn: str) -> tuple:
     """Calculate the dates 16 and 22 years into the future from a CPR number."""
-    birth_date = cpr_to_birthdate(ssn)
-    date_16_years = birth_date.replace(year=birth_date.year + 16)
-    date_22_years = birth_date.replace(year=birth_date.year + 22)
-    return date_16_years, date_22_years
+    try:
+        birth_date = cpr_to_birthdate(ssn)
+
+        # Handle leap year by checking if the target date is valid
+        def add_years_safely(date, years):
+            target_year = date.year + years
+            try:
+                return date.replace(year=target_year)
+            except ValueError:
+                # If Feb 29 doesn't exist in target year, use Feb 28
+                return date.replace(year=target_year, day=28)
+
+        date_16_years = add_years_safely(birth_date, 16)
+        date_22_years = add_years_safely(birth_date, 22)
+
+        return date_16_years, date_22_years
+
+    except Exception as e:
+        print(f"Error calculating future dates: {e}")
+        raise
 
 
 def is_under_16(ssn: str) -> bool:
     """Check if a person is under 16 years old."""
     birth_date = cpr_to_birthdate(ssn)
     today = datetime.now()
-    age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    age = (
+        today.year
+        - birth_date.year
+        - ((today.month, today.day) < (birth_date.month, birth_date.day))
+    )
     return age < 16
 
 
@@ -64,7 +85,9 @@ def zip_folder_contents(folder_path: str, zip_filename: str) -> None:
         zip_filename (str): Full path (including .zip filename) for the output zip file.
     """
     try:
-        with zipfile.ZipFile(zip_filename, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zipf:
+        with zipfile.ZipFile(
+            zip_filename, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+        ) as zipf:
             for filename in os.listdir(folder_path):
                 full_path = os.path.join(folder_path, filename)
                 if os.path.isfile(full_path):

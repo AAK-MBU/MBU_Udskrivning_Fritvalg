@@ -53,6 +53,7 @@ def kill_all(orchestrator_connection: OrchestratorConnection) -> None:
     """Forcefully close all applications used by the robot."""
     orchestrator_connection.log_trace("Killing all applications.")
 
+    orchestrator_connection.log_trace("Killing TMTand.exe processes.")
     for proc in psutil.process_iter(['name']):
         if proc.info['name'] == "TMTand.exe":
             orchestrator_connection.log_trace(f"Killing TMTand.exe process (PID {proc.pid}).")
@@ -61,6 +62,16 @@ def kill_all(orchestrator_connection: OrchestratorConnection) -> None:
             # pylint: disable-next = broad-exception-caught
             except Exception as e:
                 orchestrator_connection.log_trace(f"Failed to kill TMTand.exe process (PID {proc.pid}): {e}")
+
+    orchestrator_connection.log_trace("Killing AcroRd32.exe processes.")
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] == "AcroRd32.exe":
+            orchestrator_connection.log_trace(f"Killing AcroRd32.exe process (PID {proc.pid}).")
+            try:
+                proc.kill()
+            # pylint: disable-next = broad-exception-caught
+            except Exception as e:
+                orchestrator_connection.log_trace(f"Failed to kill AcroRd32.exe process (PID {proc.pid}): {e}")
 
 
 def open_all(orchestrator_connection: OrchestratorConnection) -> None:

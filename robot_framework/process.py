@@ -6,6 +6,7 @@ import time
 from mbu_dev_shared_components.solteqtand import SolteqTandDatabase
 from OpenOrchestrator.database.queues import QueueElement
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+import psutil
 
 from robot_framework.exceptions import BusinessError
 from robot_framework.subprocesses.helper_functions import is_under_16
@@ -49,6 +50,16 @@ def process(
 
     try:
         orchestrator_connection.log_trace("Running process.")
+
+        orchestrator_connection.log_trace("Killing AcroRd32.exe processes.")
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] == "AcroRd32.exe":
+                orchestrator_connection.log_trace(f"Killing AcroRd32.exe process (PID {proc.pid}).")
+                try:
+                    proc.kill()
+                # pylint: disable-next = broad-exception-caught
+                except Exception as e:
+                    orchestrator_connection.log_trace(f"Failed to kill AcroRd32.exe process (PID {proc.pid}): {e}")
 
         if queue_element is None or queue_element.data is None:
             orchestrator_connection.log_error(
