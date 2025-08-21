@@ -654,13 +654,16 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
         success_message = False
+
         if row_count > 0:
             for row in range(1, row_count):
                 message = grid_pattern.GetItem(row, 5).Name
+                print(f"{subject=}, {message=}")
                 if subject == message:
                     success_message = True
                     break
 
+        print(f"{success_message=}")
         if success_message:
             print("Message has already been sent.")
             return True
