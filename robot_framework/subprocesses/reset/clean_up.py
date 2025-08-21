@@ -4,7 +4,9 @@ import os
 import shutil
 from pathlib import Path
 
-from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+import psutil
+from OpenOrchestrator.orchestrator_connection.connection import \
+    OrchestratorConnection
 
 from robot_framework import config
 
@@ -21,10 +23,16 @@ def clean_up_tmp_folder(orchestrator_connection: OrchestratorConnection) -> None
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as error:  # pylint: disable=broad-except
-                orchestrator_connection.log_trace(f"Failed to delete {file_path}. Reason: {error}")
-        orchestrator_connection.log_trace(f"Temporary folder {config.TMP_FOLDER} cleaned up.")
+                orchestrator_connection.log_trace(
+                    f"Failed to delete {file_path}. Reason: {error}"
+                )
+        orchestrator_connection.log_trace(
+            f"Temporary folder {config.TMP_FOLDER} cleaned up."
+        )
     else:
-        orchestrator_connection.log_trace(f"Temporary folder {config.TMP_FOLDER} does not exist.")
+        orchestrator_connection.log_trace(
+            f"Temporary folder {config.TMP_FOLDER} does not exist."
+        )
 
 
 def clean_up_download_folder(orchestrator_connection: OrchestratorConnection) -> None:
@@ -41,7 +49,32 @@ def clean_up_download_folder(orchestrator_connection: OrchestratorConnection) ->
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as error:  # pylint: disable=broad-except
-                orchestrator_connection.log_trace(f"Failed to delete {file_path}. Reason: {error}")
-        orchestrator_connection.log_trace(f"Download folder {download_folder} cleaned up.")
+                orchestrator_connection.log_trace(
+                    f"Failed to delete {file_path}. Reason: {error}"
+                )
+        orchestrator_connection.log_trace(
+            f"Download folder {download_folder} cleaned up."
+        )
     else:
-        orchestrator_connection.log_trace(f"Download folder {download_folder} does not exist.")
+        orchestrator_connection.log_trace(
+            f"Download folder {download_folder} does not exist."
+        )
+
+
+def kill_application(
+    application_name: str, orchestrator_connection: OrchestratorConnection
+) -> None:
+    """Kill a specific application by name."""
+    orchestrator_connection.log_trace(f"Killing {application_name} processes.")
+    for proc in psutil.process_iter(["name"]):
+        if proc.info["name"] == application_name:
+            orchestrator_connection.log_trace(
+                f"Killing {application_name} process (PID {proc.pid})."
+            )
+            try:
+                proc.kill()
+            # pylint: disable-next = broad-exception-caught
+            except Exception as e:
+                orchestrator_connection.log_trace(
+                    f"Failed to kill {application_name} process (PID {proc.pid}): {e}"
+                )

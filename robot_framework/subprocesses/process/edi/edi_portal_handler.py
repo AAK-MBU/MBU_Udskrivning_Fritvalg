@@ -29,7 +29,6 @@ class EdiContext:
     extern_clinic_data: Dict[str, Any]
     queue_element: Dict[str, Any]
     path_to_files_for_upload: str
-    base_subject: str = ""
     subject: str = ""
     journal_note: str | None = None
     value_data: Dict[str, Any] | None = None
