@@ -54,6 +54,7 @@ def kill_all(orchestrator_connection: OrchestratorConnection) -> None:
 
     kill_application("AcroRd32.exe", orchestrator_connection)
     kill_application("TMTand.exe", orchestrator_connection)
+    kill_application("WINWORD.exe", orchestrator_connection)
 
 
 def open_all(orchestrator_connection: OrchestratorConnection) -> None:
