@@ -104,9 +104,9 @@ def kill_application(
     gone, alive = psutil.wait_procs(procs, timeout=5)
 
     for p in gone:
-    orchestrator_connection.log_trace(
-        f"{application_name} (PID {p.pid}) exited cleanly."
-    )
+        orchestrator_connection.log_trace(
+            f"{application_name} (PID {p.pid}) exited cleanly."
+        )
 
     for proc in alive:
         try:
