@@ -6,3 +6,4 @@ disable =
   R0914, # Too many local variables
   R0915, # Too many statements
   R0801, # Duplicate code
+  R0912, # Too many branches
