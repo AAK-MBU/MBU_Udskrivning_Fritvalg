@@ -7,6 +7,7 @@ from pathlib import Path
 import psutil
 from OpenOrchestrator.orchestrator_connection.connection import \
     OrchestratorConnection
+from psutil import AccessDenied, NoSuchProcess, ZombieProcess
 
 from robot_framework import config
 
@@ -64,17 +65,60 @@ def clean_up_download_folder(orchestrator_connection: OrchestratorConnection) ->
 def kill_application(
     application_name: str, orchestrator_connection: OrchestratorConnection
 ) -> None:
-    """Kill a specific application by name."""
+    """Best-effort kill of all processes matching application_name on Windows."""
+    target = application_name.lower()
     orchestrator_connection.log_trace(f"Killing {application_name} processes.")
-    for proc in psutil.process_iter(["name"]):
-        if proc.info["name"] == application_name:
+
+    procs = []
+    for proc in psutil.process_iter(attrs=["pid", "name", "exe", "cmdline"], ad_value=None):
+        try:
+            name = (proc.info.get("name") or "").lower()
+            exe_base = os.path.basename(proc.info.get("exe") or "").lower()
+            if target in (name, exe_base):
+                procs.append(proc)
+        except (NoSuchProcess, ZombieProcess):
+            continue
+        # pylint: disable-next = broad-exception-caught
+        except Exception as e:
             orchestrator_connection.log_trace(
-                f"Killing {application_name} process (PID {proc.pid})."
+                f"While enumerating {application_name}, skipping PID {getattr(proc, 'pid', '?')}: {e}"
             )
-            try:
-                proc.kill()
-            # pylint: disable-next = broad-exception-caught
-            except Exception as e:
-                orchestrator_connection.log_trace(
-                    f"Failed to kill {application_name} process (PID {proc.pid}): {e}"
-                )
+
+    # Try graceful terminate first
+    for proc in procs:
+        try:
+            proc.terminate()
+        except (NoSuchProcess, ZombieProcess):
+            continue
+        except AccessDenied as e:
+            orchestrator_connection.log_trace(
+                f"Access denied terminating {application_name} (PID {proc.pid}): {e}"
+            )
+        # pylint: disable-next = broad-exception-caught
+        except Exception as e:
+            orchestrator_connection.log_trace(
+                f"Unexpected error terminating {application_name} (PID {proc.pid}): {e}"
+            )
+
+    # Wait a moment, then force kill stragglers
+    gone, alive = psutil.wait_procs(procs, timeout=5)
+
+    for p in gone:
+    orchestrator_connection.log_trace(
+        f"{application_name} (PID {p.pid}) exited cleanly."
+    )
+
+    for proc in alive:
+        try:
+            proc.kill()
+        except (NoSuchProcess, ZombieProcess):
+            continue
+        except AccessDenied as e:
+            orchestrator_connection.log_trace(
+                f"Access denied killing {application_name} (PID {proc.pid}): {e}"
+            )
+        # pylint: disable-next = broad-exception-caught
+        except Exception as e:
+            orchestrator_connection.log_trace(
+                f"Unexpected error killing {application_name} (PID {proc.pid}): {e}"
+            )
