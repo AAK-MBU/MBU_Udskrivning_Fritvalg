@@ -4,6 +4,7 @@ import datetime
 import json
 import time
 
+import uiautomation as auto
 from dateutil.relativedelta import relativedelta
 from mbu_dev_shared_components.solteqtand import SolteqTandDatabase
 from OpenOrchestrator.database.queues import QueueElement
@@ -42,6 +43,15 @@ def process(
     queue_element: QueueElement | None = None,
 ) -> None:
     """Do the primary process of the robot."""
+    try:
+        # Force release of keys
+        auto.SendKey(auto.Keys.VK_LWIN, up=True)
+        auto.SendKey(auto.Keys.VK_RWIN, up=True)
+
+        for vk in (auto.Keys.VK_CONTROL, auto.Keys.VK_MENU, auto.Keys.VK_SHIFT):
+            auto.SendKey(vk, up=True)
+    except Exception as e:
+        orchestrator_connection.log_error(f"Error releasing keys: {e}")
 
     try:
         orchestrator_connection.log_trace("Running process.")
