@@ -33,7 +33,7 @@ class InitializationChecks:
         self.solteq_tand_db_obj = SolteqTandDatabase(
             orchestrator_connection.get_constant("solteq_tand_db_connstr").value
         )
-        self.rpa_db_conn = orchestrator_connection.get_constant("rpa_db_connstr").value
+        self.rpa_db_conn = orchestrator_connection.get_constant("DbConnectionString").value
 
     def _get_error_message(self, exception_code: str, default: str) -> str:
         """Get the error message from the database based on the exception code."""

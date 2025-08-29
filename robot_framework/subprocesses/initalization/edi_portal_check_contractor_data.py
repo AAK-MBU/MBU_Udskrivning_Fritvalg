@@ -27,7 +27,7 @@ def check_contractor_data(
             orchestrator_connection=orchestrator_connection
         )
         orchestrator_connection.log_trace("Checking if contractor id is set...")
-        rpa_db_conn = orchestrator_connection.get_constant("rpa_db_connstr").value
+        rpa_db_conn = orchestrator_connection.get_constant("DbConnectionString").value
         if contractor_check["rowCount"] == 0:
             excp = get_exceptions(rpa_db_conn)
             message = [d for d in excp if d["exception_code"] == "1G"][0][
