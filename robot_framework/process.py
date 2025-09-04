@@ -7,34 +7,41 @@ import time
 from dateutil.relativedelta import relativedelta
 from mbu_dev_shared_components.solteqtand import SolteqTandDatabase
 from OpenOrchestrator.database.queues import QueueElement
-from OpenOrchestrator.orchestrator_connection.connection import \
-    OrchestratorConnection
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
 from robot_framework.exceptions import BusinessError
 from robot_framework.subprocesses.helper_functions import is_under_16
-from robot_framework.subprocesses.initalization.initalize import \
-    initalization_checks
-from robot_framework.subprocesses.process.document.create_medical_record import \
-    check_and_create_medical_record_document
-from robot_framework.subprocesses.process.document.handle_discharge_document import \
-    handle_discharge_document
-from robot_framework.subprocesses.process.document.send_discharge_document import \
-    check_and_send_discharge_document
+from robot_framework.subprocesses.initalization.initalize import initalization_checks
+from robot_framework.subprocesses.process.document.create_medical_record import (
+    check_and_create_medical_record_document,
+)
+from robot_framework.subprocesses.process.document.handle_discharge_document import (
+    handle_discharge_document,
+)
+from robot_framework.subprocesses.process.document.send_discharge_document import (
+    check_and_send_discharge_document,
+)
 from robot_framework.subprocesses.process.edi.edi_portal_handler import (
-    EdiContext, edi_portal_handler)
-from robot_framework.subprocesses.process.edi.get_files_for_edi_portal import \
-    prepare_edi_portal_documents
-from robot_framework.subprocesses.process.patient.create_booking_reminders import \
-    create_booking_reminders
-from robot_framework.subprocesses.process.patient.create_event import \
-    create_event_if_not_created
-from robot_framework.subprocesses.process.patient.update_patient_info import \
-    update_patient_info
-from robot_framework.subprocesses.process.romexis.romexis_images_handler import \
-    get_images_from_romexis
-from robot_framework.subprocesses.reset.clean_up import kill_application
-from robot_framework.subprocesses.reset.close_applications import \
-    close_patient_window
+    EdiContext,
+    edi_portal_handler,
+)
+from robot_framework.subprocesses.process.edi.get_files_for_edi_portal import (
+    prepare_edi_portal_documents,
+)
+from robot_framework.subprocesses.process.patient.create_booking_reminders import (
+    create_booking_reminders,
+)
+from robot_framework.subprocesses.process.patient.create_event import (
+    create_event_if_not_created,
+)
+from robot_framework.subprocesses.process.patient.update_patient_info import (
+    update_patient_info,
+)
+from robot_framework.subprocesses.process.romexis.romexis_images_handler import (
+    get_images_from_romexis,
+)
+from robot_framework.subprocesses.reset.clean_up import kill_application, release_keys
+from robot_framework.subprocesses.reset.close_applications import close_patient_window
 
 
 def process(
@@ -42,6 +49,9 @@ def process(
     queue_element: QueueElement | None = None,
 ) -> None:
     """Do the primary process of the robot."""
+    # Ensure no modifier keys are stuck. VM sometimes causes keys to get
+    # stuck, so we release them at the start of each process.
+    release_keys(orchestrator_connection)
 
     try:
         orchestrator_connection.log_trace("Running process.")
@@ -196,7 +206,9 @@ def process(
 
         # Check if the receipt PDF was created successfully and upload it to Solteq Tand.
         orchestrator_connection.log_trace("Checking for existing EDI Portal documents.")
-        edi_receipt_date_one_month_ago = datetime.datetime.now() - relativedelta(months=1)
+        edi_receipt_date_one_month_ago = datetime.datetime.now() - relativedelta(
+            months=1
+        )
         list_of_documents = solteq_tand_db_object.get_list_of_documents(
             filters={
                 "p.cpr": queue_element_data["patient_cpr"],
@@ -227,12 +239,14 @@ def process(
 
         # Check if administrative note exists if not create it.
         orchestrator_connection.log_trace("Checking if administrative note exists.")
-        journal_note_date_one_month_ago = datetime.datetime.now() - relativedelta(months=1)
+        journal_note_date_one_month_ago = datetime.datetime.now() - relativedelta(
+            months=1
+        )
         journal_note = "Administrativt notat 'Udskrivning til frit valg gennemført af robot. Sendt information til pt. og sendt journal og billedmateriale til privat tandlæge via EDI-portal. Se dokumentskab. Journal flyttet til Tandplejen Aarhus'"
         filter_params = {
             "p.cpr": queue_element_data["patient_cpr"],
             "dn.Beskrivelse": f"%{journal_note}%",
-            "ds.Dokumenteret": (">=", journal_note_date_one_month_ago)
+            "ds.Dokumenteret": (">=", journal_note_date_one_month_ago),
         }
         result = solteq_tand_db_object.get_list_of_journal_notes(
             filters=filter_params, order_by="ds.Dokumenteret", order_direction="DESC"
