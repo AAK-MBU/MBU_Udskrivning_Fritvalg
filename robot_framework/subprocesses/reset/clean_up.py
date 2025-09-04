@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 
 import psutil
-import uiautomation as auto
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from psutil import AccessDenied, NoSuchProcess, ZombieProcess
 
