@@ -5,8 +5,7 @@ import shutil
 from pathlib import Path
 
 import psutil
-from OpenOrchestrator.orchestrator_connection.connection import \
-    OrchestratorConnection
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from psutil import AccessDenied, NoSuchProcess, ZombieProcess
 
 from robot_framework import config
@@ -70,7 +69,9 @@ def kill_application(
     orchestrator_connection.log_trace(f"Killing {application_name} processes.")
 
     procs = []
-    for proc in psutil.process_iter(attrs=["pid", "name", "exe", "cmdline"], ad_value=None):
+    for proc in psutil.process_iter(
+        attrs=["pid", "name", "exe", "cmdline"], ad_value=None
+    ):
         try:
             name = (proc.info.get("name") or "").lower()
             exe_base = os.path.basename(proc.info.get("exe") or "").lower()
@@ -122,3 +123,38 @@ def kill_application(
             orchestrator_connection.log_trace(
                 f"Unexpected error killing {application_name} (PID {proc.pid}): {e}"
             )
+
+
+def release_keys(orchestrator_connection: OrchestratorConnection) -> None:
+    """Release Ctrl, Alt, and Shift keys if they are stuck."""
+
+    orchestrator_connection.log_trace("Releasing Ctrl, Alt, and Shift keys.")
+    # pylint: disable-next = import-outside-toplevel
+    import ctypes
+
+    try:
+        # Use Windows API to release keys
+        user32 = ctypes.windll.user32
+
+        # Key codes
+        keys_to_release = [
+            0x11,  # VK_CONTROL
+            0x10,  # VK_SHIFT
+            0x12,  # VK_MENU (Alt)
+            0x5B,  # VK_LWIN
+            0x5C,  # VK_RWIN
+            0xA2,  # VK_LCONTROL
+            0xA3,  # VK_RCONTROL
+            0xA0,  # VK_LSHIFT
+            0xA1,  # VK_RSHIFT
+            0xA4,  # VK_LMENU
+            0xA5,  # VK_RMENU
+        ]
+
+        # Send key up events (0x0002 is KEYEVENTF_KEYUP)
+        for key in keys_to_release:
+            user32.keybd_event(key, 0, 0x0002, 0)
+
+    # pylint: disable-next = broad-exception-caught
+    except Exception as e:
+        orchestrator_connection.log_error(f"Error releasing keys: {e}")
