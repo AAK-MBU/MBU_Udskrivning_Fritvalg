@@ -4,7 +4,6 @@ import datetime
 import json
 import time
 
-import uiautomation as auto
 from dateutil.relativedelta import relativedelta
 from mbu_dev_shared_components.solteqtand import SolteqTandDatabase
 from OpenOrchestrator.database.queues import QueueElement
