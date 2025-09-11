@@ -701,7 +701,7 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
                     continue
 
                 # Both conditions must be true: message contains subject AND date is older than 1 month
-                if parsed_date < one_month_ago:
+                if parsed_date > one_month_ago:
                     success_message = True
                     print(
                         f"Found matching row {row}: message contains '{subject}' and date {parsed_date} is older than 1 month"
