@@ -518,18 +518,53 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
         success_message = False
+        # if row_count > 0:
+        #     for row in range(1, row_count):
+        #         message = grid_pattern.GetItem(row, 5).Name
+        #         print(f"Message: {message}")
+        #         print(f"Message check: {subject == message}")
+        #         if subject == message:
+        #             success_message = True
+        #             menu_button = grid_pattern.GetItem(row, 10)
+        #             break
+
+        latest_matching_row = None
+        latest_date = None
+
+        def _parse_date(date_str: str) -> datetime | None:
+            """Parse date from format like '11-09-2025 13:28'"""
+            if not date_str:
+                return None
+            try:
+                return datetime.strptime(date_str, "%d-%m-%Y %H:%M")
+            except ValueError:
+                return None
+
         if row_count > 0:
             for row in range(1, row_count):
-                message = grid_pattern.GetItem(row, 5).Name
+                message = grid_pattern.GetItem(row, 5).Name or ""
+                date_str = grid_pattern.GetItem(row, 1).Name or ""
                 print(f"Message: {message}")
+                print(f"Date: {date_str}")
                 print(f"Message check: {subject == message}")
+
                 if subject == message:
-                    success_message = True
-                    menu_button = grid_pattern.GetItem(row, 10)
-                    break
+                    parsed_date = _parse_date(date_str)
+                    if parsed_date is not None:
+                        if latest_date is None or parsed_date > latest_date:
+                            latest_matching_row = row
+                            latest_date = parsed_date
+                            print(
+                                f"Found newer matching row {row} with date {parsed_date}"
+                            )
+
+            # Use the latest matching row if found
+            if latest_matching_row is not None:
+                success_message = True
 
         if success_message:
-            print("Message sent successfully.")
+            menu_button = grid_pattern.GetItem(latest_matching_row, 10)
+            print(f"Using latest matching row {latest_matching_row}")
         else:
             print("Message not sent.")
             raise RuntimeError("Message not sent.")
