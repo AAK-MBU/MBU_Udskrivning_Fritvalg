@@ -561,11 +561,10 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
             # Use the latest matching row if found
             if latest_matching_row is not None:
                 success_message = True
-                menu_button = grid_pattern.GetItem(latest_matching_row, 10)
-                print(f"Using latest matching row {latest_matching_row}")
 
         if success_message:
-            print("Message sent successfully.")
+            menu_button = grid_pattern.GetItem(latest_matching_row, 10)
+            print(f"Using latest matching row {latest_matching_row}")
         else:
             print("Message not sent.")
             raise RuntimeError("Message not sent.")
