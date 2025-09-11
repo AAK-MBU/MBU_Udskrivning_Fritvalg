@@ -2,10 +2,11 @@
 This module contains functions to interact with the EDI portal.
 These functions should be moved to mbu_dev_shared_components/solteqtand/application/edi_portal.py
 """
+
 import locale
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pyodbc
@@ -87,7 +88,9 @@ def wait_for_control_to_disappear(
     )
 
 
-def edi_portal_check_contractor_id(extern_clinic_data: dict, sleep_time: int = 5) -> dict:
+def edi_portal_check_contractor_id(
+    extern_clinic_data: dict, sleep_time: int = 5
+) -> dict:
     """
     Checks if the contractor ID is valid in the EDI portal.
 
@@ -100,7 +103,10 @@ def edi_portal_check_contractor_id(extern_clinic_data: dict, sleep_time: int = 5
     """
     try:
         # Handle Hasle Torv Clinic special case
-        if extern_clinic_data[0]["contractorId"] == "477052" or extern_clinic_data[0]["contractorId"] == "470678":
+        if (
+            extern_clinic_data[0]["contractorId"] == "477052"
+            or extern_clinic_data[0]["contractorId"] == "470678"
+        ):
             contractor_id = "485055"
             clinic_phone_number = "86135240"
         else:
@@ -136,7 +142,7 @@ def edi_portal_check_contractor_id(extern_clinic_data: dict, sleep_time: int = 5
 
         table_dentists = wait_for_control(
             auto.TableControl,
-            {'AutomationId': 'table_id1'},
+            {"AutomationId": "table_id1"},
             search_depth=25,
         )
         grid_pattern = table_dentists.GetPattern(auto.PatternId.GridPattern)
@@ -175,9 +181,7 @@ def edi_portal_click_next_button(sleep_time: int) -> None:
 
         try:
             next_button = wait_for_control(
-                edge_window.ButtonControl, {"Name": "Næste"},
-                search_depth=50,
-                timeout=5
+                edge_window.ButtonControl, {"Name": "Næste"}, search_depth=50, timeout=5
             )
         except TimeoutError:
             next_button = None
@@ -185,9 +189,10 @@ def edi_portal_click_next_button(sleep_time: int) -> None:
         if not next_button:
             try:
                 next_button = wait_for_control(
-                    edge_window.ButtonControl, {"AutomationId": "patientInformationNextButton"},
+                    edge_window.ButtonControl,
+                    {"AutomationId": "patientInformationNextButton"},
                     search_depth=50,
-                    timeout=5
+                    timeout=5,
                 )
             except TimeoutError:
                 next_button = None
@@ -209,7 +214,10 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
         extern_clinic_data (dict): A dictionary containing the contractor ID and phone number.
     """
     try:
-        if extern_clinic_data[0]["contractorId"] == "477052" or extern_clinic_data[0]["contractorId"] == "470678":
+        if (
+            extern_clinic_data[0]["contractorId"] == "477052"
+            or extern_clinic_data[0]["contractorId"] == "470678"
+        ):
             contractor_id = "485055"
         else:
             contractor_id = extern_clinic_data[0]["contractorId"]
@@ -249,7 +257,10 @@ def edi_portal_choose_receiver(extern_clinic_data: dict) -> None:
         extern_clinic_data (dict): A dictionary containing the contractor ID and phone number.
     """
     try:
-        if extern_clinic_data[0]["contractorId"] == "477052" or extern_clinic_data[0]["contractorId"] == "470678":
+        if (
+            extern_clinic_data[0]["contractorId"] == "477052"
+            or extern_clinic_data[0]["contractorId"] == "470678"
+        ):
             clinic_phone_number = "86135240"
         else:
             clinic_phone_number = extern_clinic_data[0]["phoneNumber"]
@@ -318,9 +329,17 @@ def edi_portal_add_content(
         raise ValueError("Subject is required.")
 
     if extern_clinic_data[0]["contractorId"] == "477052":
-        subject = subject + " på Tandklinikken Hasle Torv " + queue_element.get("patient_name")
+        subject = (
+            subject
+            + " på Tandklinikken Hasle Torv "
+            + queue_element.get("patient_name")
+        )
     elif extern_clinic_data[0]["contractorId"] == "470678":
-        subject = subject + " på Tandklinikken Brobjergparken " + queue_element.get("patient_name")
+        subject = (
+            subject
+            + " på Tandklinikken Brobjergparken "
+            + queue_element.get("patient_name")
+        )
     else:
         subject = subject + " " + queue_element.get("patient_name")
 
@@ -330,9 +349,7 @@ def edi_portal_add_content(
 
     examination_date = _get_formatted_date(data=queue_element)
     risk_profile_map = {0: "Grøn", 1: "Gul", 2: "Rød", 3: "Ukendt"}
-    risc_profile = risk_profile_map.get(
-        queue_element.get("riskProfil")
-    )
+    risc_profile = risk_profile_map.get(queue_element.get("riskProfil"))
     dental_plan = queue_element.get("tandplejeplan", "Ukendt")
 
     body_modified = re.sub(r"@examinationDate", examination_date, body)
@@ -496,9 +513,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
 
         table_post_messages = wait_for_control(
-            auto.TableControl,
-            {"AutomationId": "table_id1"},
-            search_depth=50
+            auto.TableControl, {"AutomationId": "table_id1"}, search_depth=50
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
@@ -532,9 +547,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
         menu_popup_item.SetFocus()
         pos = menu_popup_item.GetClickablePoint()
-        auto.MoveTo(
-            pos[0], pos[1], moveSpeed=0.5, waitTime=0
-        )
+        auto.MoveTo(pos[0], pos[1], moveSpeed=0.5, waitTime=0)
         menu_popup_item_save = wait_for_control(
             menu_popup.HyperlinkControl,
             {"Name": "Gem som PDF"},
@@ -554,7 +567,9 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
             print("Waiting for receipt to download...")
             time.sleep(1)
 
-        raise FileNotFoundError("No file starting with 'Meddelelse' and ending with '.pdf' was found within the timeout period.")
+        raise FileNotFoundError(
+            "No file starting with 'Meddelelse' and ending with '.pdf' was found within the timeout period."
+        )
 
     except Exception as e:
         print(f"Error while downloading the receipt from EDI Portal: {e}")
@@ -621,11 +636,19 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
     Returns:
         bool: True if the patient data has been sent, False otherwise.
     """
+
+    def _parse_date(date_str: str) -> datetime | None:
+        """Parse date from format like '11-09-2025 13:28'"""
+        if not date_str:
+            return None
+        try:
+            return datetime.strptime(date_str, "%d-%m-%Y %H:%M")
+        except ValueError:
+            return None
+
     try:
         url_field = wait_for_control(
-            auto.EditControl,
-            {"Name": "Adresse- og søgelinje"},
-            search_depth=25
+            auto.EditControl, {"Name": "Adresse- og søgelinje"}, search_depth=25
         )
         url_field_value_pattern = url_field.GetPattern(auto.PatternId.ValuePattern)
         url_field_value_pattern.SetValue("https://ediportalen.dk/Messages/Sent")
@@ -634,34 +657,60 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         time.sleep(5)
 
         test = wait_for_control(
-            auto.WindowControl,
-            {"ClassName": "Chrome_WidgetWin_1"},
-            search_depth=3
+            auto.WindowControl, {"ClassName": "Chrome_WidgetWin_1"}, search_depth=3
         )
 
         test.SetFocus()
         next_test = wait_for_control(
-            test.PaneControl,
-            {"ClassName": "BrowserRootView"},
-            search_depth=4
+            test.PaneControl, {"ClassName": "BrowserRootView"}, search_depth=4
         )
 
         table_post_messages = wait_for_control(
-            next_test.TableControl,
-            {"AutomationId": "table_id1"},
-            search_depth=23
+            next_test.TableControl, {"AutomationId": "table_id1"}, search_depth=23
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
         success_message = False
 
+        # if row_count > 0:
+        #     for row in range(1, row_count):
+        #         message = grid_pattern.GetItem(row, 5).Name
+        #         print(f"{subject=}, {message=}")
+        #         if subject == message:
+        #             success_message = True
+        #             break
+
+        # Define one month ago here
+        one_month_ago = datetime.now() - timedelta(days=30)
+
         if row_count > 0:
             for row in range(1, row_count):
-                message = grid_pattern.GetItem(row, 5).Name
-                print(f"{subject=}, {message=}")
-                if subject == message:
+                message = grid_pattern.GetItem(row, 5).Name or ""
+                date_str = grid_pattern.GetItem(row, 1).Name or ""
+
+                print(f"Row {row}: message='{message}', date='{date_str}'")
+
+                # Check if message contains the target text
+                if subject not in message:
+                    continue
+
+                # Parse and check if date is older than 1 month
+                parsed_date = _parse_date(date_str)
+                if parsed_date is None:
+                    print(f"Could not parse date: {date_str}")
+                    continue
+
+                # Both conditions must be true: message contains subject AND date is older than 1 month
+                if parsed_date < one_month_ago:
                     success_message = True
+                    print(
+                        f"Found matching row {row}: message contains '{subject}' and date {parsed_date} is older than 1 month"
+                    )
                     break
+                else:
+                    print(
+                        f"Message contains '{subject}' but date {parsed_date} is not older than 1 month"
+                    )
 
         print(f"{success_message=}")
         if success_message:
@@ -682,9 +731,7 @@ def edi_portal_go_to_send_journal() -> None:
     """
     try:
         url_field = wait_for_control(
-            auto.EditControl,
-            {"Name": "Adresse- og søgelinje"},
-            search_depth=25
+            auto.EditControl, {"Name": "Adresse- og søgelinje"}, search_depth=25
         )
         url_field_value_pattern = url_field.GetPattern(auto.PatternId.ValuePattern)
         url_field_value_pattern.SetValue("https://ediportalen.dk/Journal/Create")
