@@ -707,10 +707,10 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
                         f"Found matching row {row}: message contains '{subject}' and date {parsed_date} is older than 1 month"
                     )
                     break
-                else:
-                    print(
-                        f"Message contains '{subject}' but date {parsed_date} is not older than 1 month"
-                    )
+
+                print(
+                    f"Message contains '{subject}' but date {parsed_date} is not older than 1 month"
+                )
 
         print(f"{success_message=}")
         if success_message:
