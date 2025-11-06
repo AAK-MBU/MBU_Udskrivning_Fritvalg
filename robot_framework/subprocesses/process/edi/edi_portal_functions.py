@@ -226,6 +226,10 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
         else:
             contractor_id = extern_clinic_data[0]["contractorId"]
 
+        root_web_area = wait_for_control(
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=20
+        )
+
         class_options = [
             "form-control filter_search",
             "form-control filter_search valid",
@@ -234,10 +238,10 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
         for class_name in class_options:
             try:
                 search_box = wait_for_control(
-                    auto.EditControl,
+                    root_web_area.EditControl,
                     {"ClassName": class_name},
                     search_depth=22,
-                    timeout=1,
+                    timeout=3,
                 )
             except TimeoutError:
                 continue
