@@ -5,19 +5,24 @@
 
 import sys
 
-from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from OpenOrchestrator.database.queues import QueueStatus
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
-from robot_framework import initialize
-from robot_framework import reset
-from robot_framework.exceptions import handle_error, BusinessError, log_exception
-from robot_framework import process
-from robot_framework import config
+from robot_framework import config, initialize, process, reset
+from robot_framework.exceptions import BusinessError, handle_error, log_exception
 
 
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
-    orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    # orchestrator_connection = OrchestratorConnection.create_connection_from_args()
+    import os
+
+    orchestrator_connection = OrchestratorConnection(
+        "MBU_Udskrivning_Fritvalg_DEBUG",
+        os.getenv("OpenOrchestratorConnString"),
+        os.getenv("OpenOrchestratorKey"),
+        "",
+    )
     sys.excepthook = log_exception(orchestrator_connection)
 
     orchestrator_connection.log_trace("Robot Framework started.")
@@ -34,7 +39,9 @@ def main():
             # Queue loop
             while task_count < config.MAX_TASK_COUNT:
                 task_count += 1
-                queue_element = orchestrator_connection.get_next_queue_element(config.QUEUE_NAME)
+                queue_element = orchestrator_connection.get_next_queue_element(
+                    config.QUEUE_NAME
+                )
 
                 if not queue_element:
                     orchestrator_connection.log_info("Queue empty.")
@@ -43,10 +50,18 @@ def main():
                 try:
                     reset.clean_up(orchestrator_connection)
                     process.process(orchestrator_connection, queue_element)
-                    orchestrator_connection.set_queue_element_status(queue_element.id, QueueStatus.DONE)
+                    orchestrator_connection.set_queue_element_status(
+                        queue_element.id, QueueStatus.DONE
+                    )
 
                 except BusinessError as error:
-                    handle_error("BusinessException", None, error, queue_element, orchestrator_connection)
+                    handle_error(
+                        "BusinessException",
+                        None,
+                        error,
+                        queue_element,
+                        orchestrator_connection,
+                    )
 
             break  # Break retry loop
 
@@ -54,7 +69,13 @@ def main():
         # pylint: disable-next = broad-exception-caught
         except Exception as error:
             error_count += 1
-            handle_error("ApplicationException", error_count, error, queue_element, orchestrator_connection)
+            handle_error(
+                "ApplicationException",
+                error_count,
+                error,
+                queue_element,
+                orchestrator_connection,
+            )
 
     reset.clean_up(orchestrator_connection)
     reset.close_all(orchestrator_connection)
@@ -62,3 +83,7 @@ def main():
 
     if config.FAIL_ROBOT_ON_TOO_MANY_ERRORS and error_count == config.MAX_RETRY_COUNT:
         raise RuntimeError("Process failed too many times.")
+
+
+if __name__ == "__main__":
+    main()
