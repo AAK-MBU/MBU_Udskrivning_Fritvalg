@@ -113,7 +113,11 @@ def edi_portal_check_contractor_id(
             contractor_id = extern_clinic_data[0]["contractorId"]
             clinic_phone_number = extern_clinic_data[0]["phoneNumber"]
 
-        edi_portal_click_next_button(sleep_time=5)
+        edi_portal_click_next_button(sleep_time=3)
+
+        root_web_area = wait_for_control(
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=20
+        )
 
         class_options = [
             "form-control filter_search",
@@ -123,10 +127,10 @@ def edi_portal_check_contractor_id(
         for class_name in class_options:
             try:
                 search_box = wait_for_control(
-                    auto.EditControl,
+                    root_web_area.EditControl,
                     {"ClassName": class_name},
                     search_depth=22,
-                    timeout=1,
+                    timeout=2,
                 )
             except TimeoutError:
                 continue
