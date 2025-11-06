@@ -116,7 +116,7 @@ def edi_portal_check_contractor_id(
         edi_portal_click_next_button(sleep_time=3)
 
         root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=20
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
         )
 
         class_options = [
@@ -227,7 +227,7 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
             contractor_id = extern_clinic_data[0]["contractorId"]
 
         root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=20
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
         )
 
         class_options = [
@@ -241,7 +241,7 @@ def edi_portal_lookup_contractor_id(extern_clinic_data: dict) -> None:
                     root_web_area.EditControl,
                     {"ClassName": class_name},
                     search_depth=22,
-                    timeout=3,
+                    timeout=2,
                 )
             except TimeoutError:
                 continue
@@ -320,7 +320,6 @@ def edi_portal_add_content(
         except locale.Error:
             return "Error setting locale to Danish"
 
-        print(f"{data=}")
         if data.get("ukendt_dato") is True:
             return "Ukendt"
 
@@ -385,11 +384,9 @@ def edi_portal_add_content(
     else:
         body_modified = re.sub(r"@dentalPlan", "", body_modified)
 
-    print(f"Modified body: {body_modified}")
-
     try:
         root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=14
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
         )
 
         subject_field = wait_for_control(
@@ -436,7 +433,7 @@ def edi_portal_upload_files(path_to_files: str) -> None:
     upload_dialog.SendKeys("{ENTER}")
 
     root_web_area = wait_for_control(
-        auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=14
+        auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
     )
 
     element_gone = False
@@ -489,7 +486,7 @@ def edi_portal_send_message() -> None:
     """
     try:
         root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=14
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
         )
 
         send_message_button = wait_for_control(
@@ -517,7 +514,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
     """
     try:
         root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=14
+            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
         )
 
         table_post_messages = wait_for_control(
