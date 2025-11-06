@@ -113,7 +113,7 @@ def edi_portal_check_contractor_id(
             contractor_id = extern_clinic_data[0]["contractorId"]
             clinic_phone_number = extern_clinic_data[0]["phoneNumber"]
 
-        edi_portal_click_next_button(sleep_time=2)
+        edi_portal_click_next_button(sleep_time=5)
 
         class_options = [
             "form-control filter_search",
