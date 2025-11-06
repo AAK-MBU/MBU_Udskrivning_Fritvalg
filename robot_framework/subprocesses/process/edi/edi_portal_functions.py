@@ -115,7 +115,7 @@ def edi_portal_check_contractor_id(
 
         edi_portal_click_next_button(sleep_time=3)
 
-        root_web_area = self.wait_for_control(
+        root_web_area = wait_for_control(
             auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=20
         )
 
