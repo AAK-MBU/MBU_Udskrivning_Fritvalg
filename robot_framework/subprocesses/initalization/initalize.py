@@ -1,9 +1,8 @@
 """Perform initialization checks for the process."""
 
 from mbu_dev_shared_components.solteqtand import SolteqTandDatabase
-
-from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 from OpenOrchestrator.database.queues import QueueElement
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
 from robot_framework.exceptions import BusinessError
 from robot_framework.subprocesses.db_utils import get_exceptions
@@ -33,7 +32,9 @@ class InitializationChecks:
         self.solteq_tand_db_obj = SolteqTandDatabase(
             orchestrator_connection.get_constant("solteq_tand_db_connstr").value
         )
-        self.rpa_db_conn = orchestrator_connection.get_constant("DbConnectionString").value
+        self.rpa_db_conn = orchestrator_connection.get_constant(
+            "DbConnectionString"
+        ).value
 
     def _get_error_message(self, exception_code: str, default: str) -> str:
         """Get the error message from the database based on the exception code."""
@@ -141,7 +142,10 @@ class InitializationChecks:
                 "Checking if extern clinic has a deal with Aarhus Kommune...."
             )
             if not result:
-                message = self._get_error_message("1D", "Found no no deal with Aarhus Kommune for the given extern clinic.")
+                message = self._get_error_message(
+                    "1D",
+                    "Found no no deal with Aarhus Kommune for the given extern clinic.",
+                )
                 raise BusinessError(message)
             self.orchestrator_connection.log_info(
                 "Extern clinic has a deal with Aarhus Kommune."
@@ -204,6 +208,7 @@ class InitializationChecks:
         try:
             self.orchestrator_connection.solteq_tand_app.open_edi_portal()
             print("Checking contractor data...")
+            print(f"{self.orchestrator_connection.extern_clinic_data=}")
             result = self.orchestrator_connection.solteq_tand_app.edi_portal_check_contractor_id(
                 self.orchestrator_connection.extern_clinic_data
             )
@@ -250,7 +255,7 @@ class InitializationChecks:
                     "p.cpr": self.queue_element_data["patient_cpr"],
                     "ds.rn": "1",
                     "ds.DocumentStoreStatusId": "1",
-                    "ds.DocumentType": "Udskrivning - Frit valg!$#"
+                    "ds.DocumentType": "Udskrivning - Frit valg!$#",
                 }
             )
 
