@@ -146,8 +146,8 @@ def edi_portal_check_contractor_id(
 
         table_dentists = wait_for_control(
             auto.TableControl,
-            {"AutomationId": "table_id1"},
-            search_depth=25,
+            {"AutomationId": "dtRecipients"},
+            search_depth=50,
         )
         grid_pattern = table_dentists.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
@@ -275,8 +275,8 @@ def edi_portal_choose_receiver(extern_clinic_data: dict) -> None:
 
         table_dentists = wait_for_control(
             auto.TableControl,
-            {"AutomationId": "table_id1"},
-            search_depth=25,
+            {"AutomationId": "dtRecipients"},
+            search_depth=50,
         )
         grid_pattern = table_dentists.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
@@ -518,7 +518,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
 
         table_post_messages = wait_for_control(
-            auto.TableControl, {"AutomationId": "table_id1"}, search_depth=50
+            auto.TableControl, {"AutomationId": "dtSent"}, search_depth=50
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
@@ -706,7 +706,7 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         )
 
         table_post_messages = wait_for_control(
-            next_test.TableControl, {"AutomationId": "table_id1"}, search_depth=23
+            next_test.TableControl, {"AutomationId": "dtSent"}, search_depth=50
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
