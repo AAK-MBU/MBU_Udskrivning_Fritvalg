@@ -1,10 +1,15 @@
 """Check if the discharge document is already sent to DigitalPost; if not, send it."""
+
 import datetime
+
 from dateutil.relativedelta import relativedelta
 
 
 def check_and_send_discharge_document(
-    orchestrator_connection, queue_element_data, solteq_tand_db_object, discharge_document_filename
+    orchestrator_connection,
+    queue_element_data,
+    solteq_tand_db_object,
+    discharge_document_filename,
 ):
     """
     Check if the discharge document is already sent to DigitalPost; if not, send it.
@@ -27,9 +32,10 @@ def check_and_send_discharge_document(
         }
     )
 
-    print(f"{list_of_documents_send_document=}")
-
-    if list_of_documents_send_document and not list_of_documents_send_document[0]["SentToNemSMS"]:
+    if (
+        list_of_documents_send_document
+        and not list_of_documents_send_document[0]["SentToNemSMS"]
+    ):
         orchestrator_connection.log_trace(
             "Discharge document not sent to DigitalPost, proceeding to send."
         )
