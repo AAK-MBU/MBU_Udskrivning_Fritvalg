@@ -522,17 +522,8 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
-        success_message = False
-        # if row_count > 0:
-        #     for row in range(1, row_count):
-        #         message = grid_pattern.GetItem(row, 5).Name
-        #         print(f"Message: {message}")
-        #         print(f"Message check: {subject == message}")
-        #         if subject == message:
-        #             success_message = True
-        #             menu_button = grid_pattern.GetItem(row, 10)
-        #             break
 
+        success_message = False
         latest_matching_row = None
         latest_date = None
 
@@ -575,10 +566,38 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
             raise RuntimeError("Message not sent.")
 
         menu_button.Click(simulateMove=False, waitTime=0)
+        time.sleep(3)
+
+        menu_popup = None
+
+        try:
+            menu_popup = wait_for_control(
+                root_web_area.ListControl,
+                {"ClassName": "dropdown-menu show"},
+                search_depth=50,
+                timeout=15,
+            )
+        except TimeoutError:
+            pass
+
+        if not menu_popup:
+            try:
+                menu_popup = wait_for_control(
+                    root_web_area.ListControl,
+                    {"ClassName": "dropdown-menu"},
+                    search_depth=50,
+                    timeout=15,
+                )
+            except TimeoutError:
+                pass
+
+        if not menu_popup:
+            raise TimeoutError("Could not find dropdown menu with any method")
+
         menu_popup = wait_for_control(
             root_web_area.ListControl,
             {"ClassName": "dropdown-menu show"},
-            search_depth=14,
+            search_depth=50,
         )
         menu_popup_item = wait_for_control(
             menu_popup.ListItemControl,
@@ -596,7 +615,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         menu_popup_item_save.Click(simulateMove=False, waitTime=0)
 
         download_path = Path.home() / "Downloads"
-        timeout = 60  # Timeout period in seconds
+        timeout = 60
         start_time = time.time()
 
         while time.time() - start_time < timeout:
