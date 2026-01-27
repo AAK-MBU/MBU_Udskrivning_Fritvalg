@@ -15,23 +15,6 @@ from robot_framework.exceptions import BusinessError, handle_error, log_exceptio
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
 
-    # !!! DELETE THIS !!!
-
-    import os
-    import json
-
-    sys.argv = [
-        "queue_framwork.py",
-        "DADJ - Udskrivning testing",
-        os.getenv("ORCHESTRATOR_CONNECTION_STRING"),
-        os.getenv("ORCHESTRATOR_ENCRYPTION_KEY"),
-        json.dumps({
-            "test": "test",
-        })
-    ]
-
-    # !!! DELETE THIS !!!
-
     orchestrator_connection = OrchestratorConnection.create_connection_from_args()
 
     sys.excepthook = log_exception(orchestrator_connection)
@@ -46,8 +29,6 @@ def main():
     for _ in range(config.MAX_RETRY_COUNT):
         try:
             reset.reset(orchestrator_connection)
-
-            sys.exit()
 
             # Queue loop
             while task_count < config.MAX_TASK_COUNT:
