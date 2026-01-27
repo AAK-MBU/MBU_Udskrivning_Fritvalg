@@ -614,6 +614,8 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
         menu_popup_item_save.Click(simulateMove=False, waitTime=0)
 
+        time.sleep(10)
+
         download_path = Path.home() / "Downloads"
         timeout = 60
         start_time = time.time()
