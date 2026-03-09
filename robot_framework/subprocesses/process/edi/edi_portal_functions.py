@@ -350,6 +350,9 @@ def edi_portal_add_content(
     else:
         subject = subject + " " + queue_element.get("patient_name")
 
+    # Truncate subject to 66 characters to fit EDI portal limitations
+    subject = subject[:66]
+
     body = edi_portal_content["body"]
     if not body:
         raise ValueError("Body is required.")
@@ -384,6 +387,9 @@ def edi_portal_add_content(
     else:
         body_modified = re.sub(r"@dentalPlan", "", body_modified)
 
+    # Truncate body to 31150 characters to fit EDI portal limitations
+    body_modified = body_modified[:31150]
+
     try:
         root_web_area = wait_for_control(
             auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
@@ -404,6 +410,7 @@ def edi_portal_add_content(
         )
         body_field_value_pattern = body_field.GetPattern(auto.PatternId.ValuePattern)
         body_field_value_pattern.SetValue(body_modified)
+        print("BEAKPOINT")
 
     except Exception as e:
         print(f"Error while adding content in EDI Portal: {e}")
@@ -540,9 +547,6 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
             for row in range(1, row_count):
                 message = grid_pattern.GetItem(row, 5).Name or ""
                 date_str = grid_pattern.GetItem(row, 1).Name or ""
-                print(f"Message: {message}")
-                print(f"Date: {date_str}")
-                print(f"Message check: {subject == message}")
 
                 if subject == message:
                     parsed_date = _parse_date(date_str)
@@ -550,9 +554,6 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
                         if latest_date is None or parsed_date > latest_date:
                             latest_matching_row = row
                             latest_date = parsed_date
-                            print(
-                                f"Found newer matching row {row} with date {parsed_date}"
-                            )
 
             # Use the latest matching row if found
             if latest_matching_row is not None:
