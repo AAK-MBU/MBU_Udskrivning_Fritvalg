@@ -35,6 +35,7 @@ def main():
                 queue_element = orchestrator_connection.get_next_queue_element(
                     config.QUEUE_NAME
                 )
+                print(f"queue_element.id: {queue_element.id}")
 
                 if not queue_element:
                     orchestrator_connection.log_info("Queue empty.")
