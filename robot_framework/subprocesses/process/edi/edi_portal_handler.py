@@ -105,14 +105,18 @@ def edi_portal_handler(
     )
 
     patient_name = context.queue_element.get("patient_name")
-    base_subject = context.value_data["edi_portal_content"]["subject"]
+    subject = context.value_data["edi_portal_content"]["subject"]
+
+    if not subject:
+        raise ValueError("Subject is required.")
 
     if context.extern_clinic_data[0]["contractorId"] == "477052":
-        subject = base_subject + " på Tandklinikken Hasle Torv " + patient_name
+        subject = subject + " på Tandklinikken Hasle Torv"
     elif context.extern_clinic_data[0]["contractorId"] == "470678":
-        subject = base_subject + " på Tandklinikken Brobjergparken " + patient_name
-    else:
-        subject = base_subject + " " + patient_name
+        subject = subject + " på Tandklinikken Brobjergparken"
+
+    # Truncate subject to 66 characters to fit EDI portal limitations
+    subject = subject[:66]
 
     context.subject = subject
     print(f"Using subject: {context.subject}")
