@@ -400,7 +400,6 @@ def edi_portal_add_content(
         )
         body_field_value_pattern = body_field.GetPattern(auto.PatternId.ValuePattern)
         body_field_value_pattern.SetValue(body_modified)
-        print("BEAKPOINT")
 
     except Exception as e:
         print(f"Error while adding content in EDI Portal: {e}")
@@ -550,7 +549,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
                 success_message = True
 
         if success_message:
-            menu_button = grid_pattern.GetItem(latest_matching_row, 10)
+            menu_button = grid_pattern.GetItem(latest_matching_row, 9)
             print(f"Using latest matching row {latest_matching_row}")
         else:
             print("Message not sent.")
