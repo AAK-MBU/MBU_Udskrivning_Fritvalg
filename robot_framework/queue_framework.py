@@ -14,6 +14,7 @@ from robot_framework.exceptions import BusinessError, handle_error, log_exceptio
 
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
+
     orchestrator_connection = OrchestratorConnection.create_connection_from_args()
 
     sys.excepthook = log_exception(orchestrator_connection)
