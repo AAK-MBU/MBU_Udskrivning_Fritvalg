@@ -518,6 +518,8 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
+        print(f"{grid_pattern=}")
+        print(f"{row_count=}")
 
         success_message = False
         latest_matching_row = None
@@ -534,11 +536,14 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
 
         if row_count > 0:
             for row in range(1, row_count):
+                print(f"{row=}")
                 message = grid_pattern.GetItem(row, 5).Name or ""
                 date_str = grid_pattern.GetItem(row, 1).Name or ""
 
                 if subject == message:
                     parsed_date = _parse_date(date_str)
+                    print(f"{parsed_date=}")
+                    print(f"{latest_date=}")
                     if parsed_date is not None:
                         if latest_date is None or parsed_date > latest_date:
                             latest_matching_row = row
