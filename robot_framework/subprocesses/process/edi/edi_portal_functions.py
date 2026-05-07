@@ -518,8 +518,6 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         )
         grid_pattern = table_post_messages.GetPattern(auto.PatternId.GridPattern)
         row_count = grid_pattern.RowCount
-        print(f"{grid_pattern=}")
-        print(f"{row_count=}")
 
         success_message = False
         latest_matching_row = None
@@ -536,14 +534,11 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
 
         if row_count > 0:
             for row in range(1, row_count):
-                print(f"{row=}")
-                message = grid_pattern.GetItem(row, 5).Name or ""
+                message = grid_pattern.GetItem(row, 6).Name or ""
                 date_str = grid_pattern.GetItem(row, 1).Name or ""
 
                 if subject == message:
                     parsed_date = _parse_date(date_str)
-                    print(f"{parsed_date=}")
-                    print(f"{latest_date=}")
                     if parsed_date is not None:
                         if latest_date is None or parsed_date > latest_date:
                             latest_matching_row = row
@@ -554,7 +549,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
                 success_message = True
 
         if success_message:
-            menu_button = grid_pattern.GetItem(latest_matching_row, 9)
+            menu_button = grid_pattern.GetItem(latest_matching_row, 10)
             print(f"Using latest matching row {latest_matching_row}")
         else:
             print("Message not sent.")
@@ -728,20 +723,12 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         row_count = grid_pattern.RowCount
         success_message = False
 
-        # if row_count > 0:
-        #     for row in range(1, row_count):
-        #         message = grid_pattern.GetItem(row, 5).Name
-        #         print(f"{subject=}, {message=}")
-        #         if subject == message:
-        #             success_message = True
-        #             break
-
         # Define one month ago here
         one_month_ago = datetime.now() - timedelta(days=30)
 
         if row_count > 0:
             for row in range(1, row_count):
-                message = grid_pattern.GetItem(row, 5).Name or ""
+                message = grid_pattern.GetItem(row, 6).Name or ""
                 date_str = grid_pattern.GetItem(row, 1).Name or ""
 
                 print(f"Row {row}: message='{message}', date='{date_str}'")
@@ -768,7 +755,6 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
                     f"Message contains '{subject}' but date {parsed_date} is not older than 1 month"
                 )
 
-        print(f"{success_message=}")
         if success_message:
             print("Message has already been sent.")
             return True
