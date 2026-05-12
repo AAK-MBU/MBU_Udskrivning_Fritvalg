@@ -1,2 +1,0 @@
-2026-05-07 11:15:33.564 edi_portal_functions.py[41] wait_for_control -> Find Control Timeout(10s): {ClassName: 'dropdown-menu show', ControlType: ListControl}
-2026-05-07 11:15:44.616 edi_portal_functions.py[41] wait_for_control -> 
