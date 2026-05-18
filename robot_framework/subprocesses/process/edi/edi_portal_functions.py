@@ -602,20 +602,30 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
             {"Name": "Gem som PDF"},
             search_depth=50,
         )
-        menu_popup_item_save.Click(simulateMove=False, waitTime=0)
-
-        time.sleep(10)
 
         download_path = Path.home() / "Downloads"
-        timeout = 60
+        existing_receipts = set(download_path.glob("Meddelelse*.pdf"))
+
+        menu_popup_item_save.Click(simulateMove=False, waitTime=0)
+
+        timeout = 120
         start_time = time.time()
 
+        # Wait for download to START (crdownload appears)
+        while time.time() - start_time < 30:
+            if next(download_path.glob("Meddelelse*.crdownload"), None):
+                break
+            time.sleep(0.5)
+
+        # Wait for download to FINISH (crdownload disappears, pdf appears)
         while time.time() - start_time < timeout:
-            receipt = next(download_path.glob("Meddelelse*.pdf"), None)
-            if receipt is not None:
+            new_receipts = (
+                set(download_path.glob("Meddelelse*.pdf")) - existing_receipts
+            )
+            if new_receipts:
+                receipt = max(new_receipts, key=lambda p: p.stat().st_mtime)
                 print(f"Receipt downloaded: {receipt}")
-                return receipt
-            print("Waiting for receipt to download...")
+                return str(receipt)
             time.sleep(1)
 
         raise FileNotFoundError(
