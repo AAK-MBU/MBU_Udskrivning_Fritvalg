@@ -9,6 +9,8 @@ from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConn
 
 from robot_framework.subprocesses.process.edi import edi_portal_functions as edifuncs
 
+from .edi_portal_functions import _subject_build
+
 
 # Context object to hold all inputs and intermediate state
 @dataclass
@@ -104,22 +106,13 @@ def edi_portal_handler(
         else constant["value"]
     )
 
-    patient_name = context.queue_element.get("patient_name")
-    subject = context.value_data["edi_portal_content"]["subject"]
-
-    if not subject:
-        raise ValueError("Subject is required.")
-
-    if context.extern_clinic_data[0]["contractorId"] == "477052":
-        subject = subject + " på Tandklinikken Hasle Torv"
-    elif context.extern_clinic_data[0]["contractorId"] == "470678":
-        subject = subject + " på Tandklinikken Brobjergparken"
-
-    # Truncate subject to 66 characters to fit EDI portal limitations
-    subject = subject[:66]
-
+    subject = _subject_build(
+        subject=context.value_data["edi_portal_content"]["subject"],
+        contractor_id=context.extern_clinic_data[0]["contractorId"],
+    )
     context.subject = subject
-    print(f"Using subject: {context.subject}")
+
+    patient_name = context.queue_element.get("patient_name")
 
     # Define the ordered list of pipeline steps
     pipeline: List[Step] = [
