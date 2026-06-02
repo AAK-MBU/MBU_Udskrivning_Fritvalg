@@ -104,7 +104,7 @@ def edi_portal_handler(
         else constant["value"]
     )
 
-    subject = edifuncs._subject_build(
+    subject = edifuncs.subject_build(
         subject=context.value_data["edi_portal_content"]["subject"],
         contractor_id=context.extern_clinic_data[0]["contractorId"],
     )

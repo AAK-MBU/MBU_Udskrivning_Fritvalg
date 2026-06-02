@@ -292,7 +292,7 @@ def edi_portal_choose_receiver(extern_clinic_data: dict) -> None:
         raise
 
 
-def _subject_build(subject: str, contractor_id: str) -> str:
+def subject_build(subject: str, contractor_id: str) -> str:
     """Build the EDI portal subject line.
 
     Appends a clinic-specific suffix based on the contractor ID and
