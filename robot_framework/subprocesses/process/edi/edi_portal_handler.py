@@ -9,8 +9,6 @@ from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConn
 
 from robot_framework.subprocesses.process.edi import edi_portal_functions as edifuncs
 
-from .edi_portal_functions import _subject_build
-
 
 # Context object to hold all inputs and intermediate state
 @dataclass
@@ -106,7 +104,7 @@ def edi_portal_handler(
         else constant["value"]
     )
 
-    subject = _subject_build(
+    subject = edifuncs._subject_build(
         subject=context.value_data["edi_portal_content"]["subject"],
         contractor_id=context.extern_clinic_data[0]["contractorId"],
     )

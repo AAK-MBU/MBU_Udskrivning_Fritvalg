@@ -321,7 +321,7 @@ def _subject_build(subject: str, contractor_id: str) -> str:
     elif contractor_id == "470678":
         subject = subject + " på Tandklinikken Brobjergparken"
 
-    MAX_SUBJECT_LENGTH = 66
+    MAX_SUBJECT_LENGTH = 66  # pylint: disable=invalid-name
 
     if len(subject) > MAX_SUBJECT_LENGTH:
         raise ValueError(f"Subject exceeds 66 characters: {len(subject)}")
