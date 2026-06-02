@@ -367,7 +367,7 @@ def edi_portal_add_content(
         except (ValueError, KeyError):
             return "Error parsing date"
 
-    subject = _subject_build(
+    subject = subject_build(
         subject=edi_portal_content["subject"],
         contractor_id=extern_clinic_data[0]["contractorId"],
     )
