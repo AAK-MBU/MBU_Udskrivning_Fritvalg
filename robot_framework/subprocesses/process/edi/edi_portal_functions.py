@@ -292,6 +292,43 @@ def edi_portal_choose_receiver(extern_clinic_data: dict) -> None:
         raise
 
 
+def subject_build(subject: str, contractor_id: str) -> str:
+    """Build the EDI portal subject line.
+
+    Appends a clinic-specific suffix based on the contractor ID and
+    verifies the result fits the EDI portal's character limit.
+
+    Args:
+        subject: The base subject text.
+        contractor_id: Contractor ID used to select the clinic suffix.
+
+    Returns:
+        The final subject line.
+
+    Raises:
+        ValueError: If the subject or contractor ID is missing, or if the
+            final subject exceeds 66 characters.
+    """
+
+    if not subject:
+        raise ValueError("Subject is missing.")
+
+    if not contractor_id:
+        raise ValueError("Contractor ID is missing.")
+
+    if contractor_id == "477052":
+        subject = subject + " på Tandklinikken Hasle Torv"
+    elif contractor_id == "470678":
+        subject = subject + " på Tandklinikken Brobjergparken"
+
+    MAX_SUBJECT_LENGTH = 66  # pylint: disable=invalid-name
+
+    if len(subject) > MAX_SUBJECT_LENGTH:
+        raise ValueError(f"Subject exceeds 66 characters: {len(subject)}")
+
+    return subject
+
+
 def edi_portal_add_content(
     queue_element: dict,
     edi_portal_content: dict,
@@ -330,18 +367,10 @@ def edi_portal_add_content(
         except (ValueError, KeyError):
             return "Error parsing date"
 
-    subject = edi_portal_content["subject"]
-
-    if not subject:
-        raise ValueError("Subject is required.")
-
-    if extern_clinic_data[0]["contractorId"] == "477052":
-        subject = subject + " på Tandklinikken Hasle Torv"
-    elif extern_clinic_data[0]["contractorId"] == "470678":
-        subject = subject + " på Tandklinikken Brobjergparken"
-
-    # Truncate subject to 66 characters to fit EDI portal limitations
-    subject = subject[:66]
+    subject = subject_build(
+        subject=edi_portal_content["subject"],
+        contractor_id=extern_clinic_data[0]["contractorId"],
+    )
 
     body = edi_portal_content["body"]
     if not body:
