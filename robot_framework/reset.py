@@ -29,14 +29,14 @@ def clean_up(orchestrator_connection: OrchestratorConnection) -> None:
     """Do any cleanup needed to leave a blank slate."""
     orchestrator_connection.log_trace("Doing cleanup.")
 
+    orchestrator_connection.log_trace("Kill Adobe.")
+    _kill_adobe()
+
     orchestrator_connection.log_trace("Cleaning up temporary folder.")
     clean_up_tmp_folder(orchestrator_connection=orchestrator_connection)
 
     orchestrator_connection.log_trace("Cleaning up download folder.")
     clean_up_download_folder(orchestrator_connection=orchestrator_connection)
-
-    orchestrator_connection.log_trace("Kill Adobe.")
-    _kill_adobe()
 
 
 def close_all(orchestrator_connection: OrchestratorConnection) -> None:
