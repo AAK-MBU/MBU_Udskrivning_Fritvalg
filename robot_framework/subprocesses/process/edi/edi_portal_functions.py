@@ -5,12 +5,22 @@ These functions should be moved to mbu_dev_shared_components/solteqtand/applicat
 
 import locale
 import re
+import shutil
+import subprocess
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pyodbc
 import uiautomation as auto
+
+
+def _kill_adobe() -> None:
+    """Force-kills any running Adobe Acrobat/Reader processes."""
+    subprocess.call(["taskkill", "/F", "/IM", "Acrobat.exe"], stderr=subprocess.DEVNULL)
+    subprocess.call(
+        ["taskkill", "/F", "/IM", "AcroRd32.exe"], stderr=subprocess.DEVNULL
+    )
 
 
 def wait_for_control(
@@ -159,7 +169,7 @@ def edi_portal_check_contractor_id(
 
         if row_count > 0:
             for row in range(row_count):
-                phone_number = grid_pattern.GetItem(row, 4).Name
+                phone_number = grid_pattern.GetItem(row, 5).Name
                 if phone_number == clinic_phone_number:
                     is_phone_number_match = True
                     break
@@ -283,7 +293,7 @@ def edi_portal_choose_receiver(extern_clinic_data: dict) -> None:
 
         if row_count > 0:
             for row in range(row_count):
-                phone_number = grid_pattern.GetItem(row, 4).Name
+                phone_number = grid_pattern.GetItem(row, 5).Name
                 if phone_number == clinic_phone_number:
                     grid_pattern.GetItem(row, 0).Click(simulateMove=False, waitTime=0)
                     break
@@ -538,10 +548,6 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         RuntimeError: If the message was not sent successfully.
     """
     try:
-        root_web_area = wait_for_control(
-            auto.DocumentControl, {"AutomationId": "RootWebArea"}, search_depth=30
-        )
-
         table_post_messages = wait_for_control(
             auto.TableControl, {"AutomationId": "dtSent"}, search_depth=50
         )
@@ -564,7 +570,7 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
         if row_count > 0:
             for row in range(1, row_count):
                 message = grid_pattern.GetItem(row, 6).Name or ""
-                date_str = grid_pattern.GetItem(row, 1).Name or ""
+                date_str = grid_pattern.GetItem(row, 2).Name or ""
 
                 if subject == message:
                     parsed_date = _parse_date(date_str)
@@ -578,109 +584,80 @@ def edi_portal_get_journal_sent_receip(subject: str) -> str:
                 success_message = True
 
         if success_message:
-            menu_button = grid_pattern.GetItem(latest_matching_row, 10)
-            print(f"Using latest matching row {latest_matching_row}")
+            latest_row_cell = grid_pattern.GetItem(latest_matching_row, 0)
+
+            latest_row_parent = latest_row_cell.GetParentControl()
+
+            url_field = wait_for_control(
+                auto.EditControl, {"Name": "Adresse- og søgelinje"}, search_depth=25
+            )
+            url_field_value_pattern = url_field.GetPattern(auto.PatternId.ValuePattern)
+            url_field_value_pattern.SetValue(
+                f"https://ediportalen.dk/Messages/DownloadMessageDetailPdf?id={latest_row_parent.AutomationId}&isInbox=False"
+            )
+            url_field.SendKeys("{ENTER}")
+
         else:
             print("Message not sent.")
             raise RuntimeError("Message not sent.")
 
-        menu_button.Click(simulateMove=False, waitTime=0)
-        time.sleep(3)
-
-        menu_popup = None
-
-        try:
-            menu_popup = wait_for_control(
-                root_web_area.ListControl,
-                {"ClassName": "dropdown-menu show"},
-                search_depth=50,
-                timeout=15,
-            )
-        except TimeoutError:
-            pass
-
-        if not menu_popup:
-            try:
-                menu_popup = wait_for_control(
-                    root_web_area.ListControl,
-                    {"ClassName": "dropdown-menu"},
-                    search_depth=50,
-                    timeout=15,
-                )
-            except TimeoutError:
-                pass
-
-        if not menu_popup:
-            raise TimeoutError("Could not find dropdown menu with any method")
-
-        menu_popup = wait_for_control(
-            root_web_area.ListControl,
-            {"ClassName": "dropdown-menu show"},
-            search_depth=50,
-        )
-        menu_popup_item = wait_for_control(
-            menu_popup.ListItemControl,
-            {"Name": " Gem"},
-            search_depth=50,
-        )
-        menu_popup_item.SetFocus()
-        pos = menu_popup_item.GetClickablePoint()
-        auto.MoveTo(pos[0], pos[1], moveSpeed=0.5, waitTime=0)
-        menu_popup_item_save = wait_for_control(
-            menu_popup.HyperlinkControl,
-            {"Name": "Gem som PDF"},
-            search_depth=50,
-        )
+        time.sleep(5)
 
         download_path = Path.home() / "Downloads"
-        existing_receipts = set(download_path.glob("Meddelelse*.pdf"))
 
-        menu_popup_item_save.Click(simulateMove=False, waitTime=0)
+        timeout = 60
+        deadline = time.time() + timeout
 
-        timeout = 120
-        start_time = time.time()
-
-        # Wait for download to START (crdownload appears)
-        while time.time() - start_time < 30:
-            if next(download_path.glob("Meddelelse*.crdownload"), None):
-                break
-            time.sleep(0.5)
-
-        # Wait for download to FINISH (crdownload disappears, pdf appears)
-        while time.time() - start_time < timeout:
-            new_receipts = (
-                set(download_path.glob("Meddelelse*.pdf")) - existing_receipts
-            )
-            if new_receipts:
-                receipt = max(new_receipts, key=lambda p: p.stat().st_mtime)
-                print(f"Receipt downloaded: {receipt}")
-                return str(receipt)
+        while next(download_path.glob("Meddelelse*.crdownload"), None):
+            if time.time() > deadline:
+                raise TimeoutError("Download did not complete within 60 seconds")
             time.sleep(1)
 
-        raise FileNotFoundError(
-            "No file starting with 'Meddelelse' and ending with '.pdf' was found within the timeout period."
-        )
+        receipts = list(download_path.glob("Meddelelse*.pdf"))
+        if not receipts:
+            raise FileNotFoundError("No matching receipt PDF found after download")
+
+        receipt = max(receipts, key=lambda p: p.stat().st_mtime)
+        print(f"Receipt downloaded: {receipt}")
+
+        _kill_adobe()
+        time.sleep(2)
+
+        return str(receipt)
 
     except Exception as e:
         print(f"Error while downloading the receipt from EDI Portal: {e}")
         raise
 
 
-def rename_file(file_path: str, new_name: str, extension: str) -> str:
+def rename_file(
+    file_path: str,
+    new_name: str,
+    extension: str,
+    retries: int = 10,
+    retry_interval: float = 3.0,
+) -> str:
     """
     Renames a file and returns its new path.
 
+    Waits briefly before attempting the rename to allow any application
+    (e.g. Adobe Acrobat) to release its file handle, then uses shutil.move
+    to avoid triggering Windows shell notifications that can cause the file
+    to be opened automatically.
+
     Args:
-        file_path (str): Full path to the file to rename.
-        new_name   (str): New filename without extension.
-        extension  (str): New extension (e.g. '.pdf').
+        file_path      (str):   Full path to the file to rename.
+        new_name       (str):   New filename without extension.
+        extension      (str):   New extension (e.g. '.pdf').
+        retries        (int):   Number of times to retry if the file is locked.
+        retry_interval (float): Seconds to wait between retries.
 
     Returns:
         str: Absolute path to the renamed file.
 
     Raises:
         FileNotFoundError: If the source file does not exist.
-        OSError:           If the rename operation fails.
+        OSError:           If the rename operation fails after all retries.
     """
     path = Path(file_path)
 
@@ -688,8 +665,31 @@ def rename_file(file_path: str, new_name: str, extension: str) -> str:
         raise FileNotFoundError(f"File not found: {file_path}")
 
     new_file_path = path.parent / f"{new_name}{extension}"
-    path.rename(new_file_path)
-    return str(new_file_path)
+
+    _kill_adobe()
+    time.sleep(3)
+
+    last_error: Exception = OSError("Unknown error during rename.")
+    for attempt in range(retries):
+        try:
+            shutil.move(str(path), str(new_file_path))
+            _kill_adobe()
+            return str(new_file_path)
+        except PermissionError as e:
+            last_error = e
+            if attempt < retries - 1:
+                print(
+                    f"File is locked, retrying in {retry_interval}s... (attempt {attempt + 1}/{retries})"
+                )
+                _kill_adobe()
+                time.sleep(retry_interval)
+
+    time.sleep(5)
+    _kill_adobe()
+
+    raise OSError(
+        f"Could not rename '{file_path}' after {retries} attempts: {last_error}"
+    ) from last_error
 
 
 def get_constants(conn_string: str, name: str) -> list:
@@ -768,7 +768,7 @@ def edi_portal_is_patient_data_sent(subject: str) -> bool:
         if row_count > 0:
             for row in range(1, row_count):
                 message = grid_pattern.GetItem(row, 6).Name or ""
-                date_str = grid_pattern.GetItem(row, 1).Name or ""
+                date_str = grid_pattern.GetItem(row, 2).Name or ""
 
                 print(f"Row {row}: message='{message}', date='{date_str}'")
 
