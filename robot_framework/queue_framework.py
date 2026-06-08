@@ -15,15 +15,7 @@ from robot_framework.exceptions import BusinessError, handle_error, log_exceptio
 def main():
     """The entry point for the framework. Should be called as the first thing when running the robot."""
 
-    # orchestrator_connection = OrchestratorConnection.create_connection_from_args()
-    import os
-
-    orchestrator_connection = OrchestratorConnection(
-        process_name="DEBUG: MBU Udskrivning Fritvalg",
-        connection_string=os.getenv("OpenOrchestratorConnString"),
-        crypto_key=os.getenv("OpenOrchestratorKey"),
-        process_arguments="",
-    )
+    orchestrator_connection = OrchestratorConnection.create_connection_from_args()
 
     sys.excepthook = log_exception(orchestrator_connection)
 
@@ -85,7 +77,3 @@ def main():
 
     if config.FAIL_ROBOT_ON_TOO_MANY_ERRORS and error_count == config.MAX_RETRY_COUNT:
         raise RuntimeError("Process failed too many times.")
-
-
-if __name__ == "__main__":
-    main()
