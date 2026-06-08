@@ -1,19 +1,18 @@
 """This module handles resetting the state of the computer so the robot can work with a clean slate."""
 
+from mbu_dev_shared_components.solteqtand import SolteqTandApp
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
 
-from mbu_dev_shared_components.solteqtand import SolteqTandApp
-
 from robot_framework import config
-
+from robot_framework.subprocesses.process.edi.edi_portal_functions import _kill_adobe
+from robot_framework.subprocesses.reset.clean_up import (
+    clean_up_download_folder,
+    clean_up_tmp_folder,
+    kill_application,
+)
 from robot_framework.subprocesses.reset.close_applications import (
     close_patient_window,
     close_solteq_tand,
-)
-from robot_framework.subprocesses.reset.clean_up import (
-    clean_up_tmp_folder,
-    clean_up_download_folder,
-    kill_application,
 )
 
 
@@ -29,6 +28,9 @@ def reset(orchestrator_connection: OrchestratorConnection) -> None:
 def clean_up(orchestrator_connection: OrchestratorConnection) -> None:
     """Do any cleanup needed to leave a blank slate."""
     orchestrator_connection.log_trace("Doing cleanup.")
+
+    orchestrator_connection.log_trace("Kill Adobe.")
+    _kill_adobe()
 
     orchestrator_connection.log_trace("Cleaning up temporary folder.")
     clean_up_tmp_folder(orchestrator_connection=orchestrator_connection)
