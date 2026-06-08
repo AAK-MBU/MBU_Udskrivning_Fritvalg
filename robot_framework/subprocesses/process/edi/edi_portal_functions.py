@@ -673,6 +673,7 @@ def rename_file(
     for attempt in range(retries):
         try:
             shutil.move(str(path), str(new_file_path))
+            time.sleep(5)
             _kill_adobe()
             return str(new_file_path)
         except PermissionError as e:
@@ -683,9 +684,6 @@ def rename_file(
                 )
                 _kill_adobe()
                 time.sleep(retry_interval)
-
-    time.sleep(5)
-    _kill_adobe()
 
     raise OSError(
         f"Could not rename '{file_path}' after {retries} attempts: {last_error}"
